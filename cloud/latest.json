@@ -1,0 +1,10 @@
+{
+  "version": "1.0.0",
+  "name": "贴片文字修改工具",
+  "notes": "初始正式版：支持贴片文字背景替换、文字叠加、云端更新。",
+  "setupUrl": "https://example.com/patch-editor/releases/贴片文字修改工具_Setup_1.0.0.exe",
+  "sha256": "",
+  "force": false,
+  "minVersion": "1.0.0",
+  "publishedAt": "2026-09-10"
+}

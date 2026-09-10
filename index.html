@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>贴片文字背景修改工具</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <div>
+          <h1>贴片文字修改</h1>
+          <p>本地桌面版 · 打开贴片图，改文字背景色并导出</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="checkUpdateBtn" class="btn btn-ghost" type="button">检查更新</button>
+        <button id="openBtn" class="btn btn-primary" type="button">打开贴片图</button>
+        <input id="fileInput" type="file" accept="image/*" hidden />
+        <button id="downloadBtn" class="btn btn-secondary" type="button" disabled>导出图片</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="panel">
+        <section class="panel-block">
+          <h2>编辑模式</h2>
+          <div class="mode-grid" role="tablist">
+            <button class="mode-btn active" data-mode="select" type="button">框选区域</button>
+            <button class="mode-btn" data-mode="sample" type="button">吸取颜色</button>
+            <button class="mode-btn" data-mode="brush" type="button">涂抹背景</button>
+            <button class="mode-btn" data-mode="text" type="button">添加文字</button>
+          </div>
+        </section>
+
+        <section class="panel-block">
+          <h2>背景颜色</h2>
+          <div class="color-row">
+            <label class="color-field">
+              <span>目标色</span>
+              <input id="targetColor" type="color" value="#ffffff" />
+            </label>
+            <label class="color-field">
+              <span>容差</span>
+              <input id="tolerance" type="range" min="0" max="120" value="45" />
+              <em id="toleranceValue">45</em>
+            </label>
+          </div>
+          <div class="action-row">
+            <button id="recolorBtn" class="btn btn-primary full" type="button" disabled>替换选区背景色</button>
+            <button id="fillBrushBtn" class="btn btn-ghost full" type="button" disabled>用目标色涂抹选区</button>
+          </div>
+          <p class="hint">框选文字区域后点「替换选区背景色」：相近底色会被替换，文字笔触尽量保留。</p>
+        </section>
+
+        <section class="panel-block">
+          <h2>文字叠加</h2>
+          <label class="field">
+            <span>文字内容</span>
+            <input id="textContent" type="text" placeholder="输入要覆盖的新文字" />
+          </label>
+          <div class="field-grid">
+            <label class="field">
+              <span>字号</span>
+              <input id="fontSize" type="number" min="8" max="200" value="36" />
+            </label>
+            <label class="field">
+              <span>颜色</span>
+              <input id="textColor" type="color" value="#111111" />
+            </label>
+          </div>
+          <label class="field">
+            <span>字体</span>
+            <select id="fontFamily">
+              <option value='"Microsoft YaHei", sans-serif'>微软雅黑</option>
+              <option value='"SimHei", sans-serif'>黑体</option>
+              <option value="Arial, sans-serif">Arial</option>
+              <option value='"Times New Roman", serif'>Times New Roman</option>
+              <option value="Impact, sans-serif">Impact</option>
+            </select>
+          </label>
+          <label class="field checkbox">
+            <input id="textBold" type="checkbox" checked />
+            <span>加粗</span>
+          </label>
+          <div class="action-row">
+            <button id="placeTextBtn" class="btn btn-primary full" type="button" disabled>在选区放置文字</button>
+            <button id="clearTextBtn" class="btn btn-ghost full" type="button" disabled>清除文字图层</button>
+          </div>
+        </section>
+
+        <section class="panel-block">
+          <h2>历史</h2>
+          <div class="action-row compact">
+            <button id="undoBtn" class="btn btn-ghost" type="button" disabled>撤销</button>
+            <button id="redoBtn" class="btn btn-ghost" type="button" disabled>重做</button>
+            <button id="resetBtn" class="btn btn-ghost" type="button" disabled>还原原图</button>
+          </div>
+        </section>
+      </aside>
+
+      <section class="stage">
+        <div id="emptyState" class="empty-state">
+          <div class="empty-card">
+            <h2>上传一张贴片图开始</h2>
+            <p>支持 JPG / PNG / WebP。建议先框选文字区域，再替换背景色或叠加新文字。</p>
+            <button id="emptyOpenBtn" class="btn btn-primary" type="button">选择图片</button>
+          </div>
+        </div>
+        <div id="canvasWrap" class="canvas-wrap hidden">
+          <canvas id="mainCanvas"></canvas>
+          <canvas id="overlayCanvas"></canvas>
+        </div>
+        <div id="statusBar" class="status-bar">等待上传图片</div>
+      </section>
+    </main>
+  </div>
+
+  <div id="updateModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card">
+      <h3 id="updateTitle">发现新版本</h3>
+      <p id="updateMeta" class="modal-meta"></p>
+      <pre id="updateNotes" class="modal-notes"></pre>
+      <div class="modal-actions">
+        <button id="updateLaterBtn" class="btn btn-ghost" type="button">稍后</button>
+        <button id="updateNowBtn" class="btn btn-primary" type="button">立即更新</button>
+      </div>
+      <p id="updateProgress" class="hint"></p>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

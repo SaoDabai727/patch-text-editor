@@ -1,0 +1,11 @@
+node_modules/
+release/
+dist/
+build/
+build_payload/
+*.spec
+*.log
+.DS_Store
+Thumbs.db
+__pycache__/
+.venv/
