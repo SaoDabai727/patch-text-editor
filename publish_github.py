@@ -74,28 +74,38 @@ def ensure_repo_and_push() -> None:
 
     if not repo_exists():
         print("创建公开仓库…")
-        run(
-            [
-                "gh",
-                "repo",
-                "create",
-                REPO,
-                "--public",
-                "--description",
-                f"{APP_NAME} desktop app with GitHub Releases auto-update",
-                "--source",
-                ".",
-                "--remote",
-                "origin",
-                "--push",
-            ]
-        )
+        # origin 可能已存在
+        remotes = (
+            subprocess.run(
+                ["git", "remote"],
+                cwd=str(ROOT),
+                capture_output=True,
+                text=True,
+            ).stdout
+            or ""
+        ).split()
+        create_cmd = [
+            "gh",
+            "repo",
+            "create",
+            REPO,
+            "--public",
+            "--description",
+            f"{APP_NAME} desktop app with GitHub Releases auto-update",
+        ]
+        if "origin" in remotes:
+            create_cmd += ["--source", ".", "--push"]
+        else:
+            create_cmd += ["--source", ".", "--remote", "origin", "--push"]
+        created = run(create_cmd, check=False)
+        if created.returncode != 0:
+            # 仓库可能刚创建成功但 remote 冲突：改为直接 push
+            run(["git", "push", "-u", "origin", "main"], check=False)
         return
 
     print("仓库已存在，推送 main…")
     push = run(["git", "push", "-u", "origin", "main"], check=False)
     if push.returncode != 0:
-        # 可能需要 pull --rebase；仍继续发 release
         print("警告: git push 未完全成功，继续发布 Release")
 
 
