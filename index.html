@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>贴片文字背景修改工具</title>
+  <title>贴片文字修改工具</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -13,7 +13,7 @@
         <span class="brand-mark" aria-hidden="true"></span>
         <div>
           <h1>贴片文字修改</h1>
-          <p>本地桌面版 · 打开贴片图，改文字背景色并导出</p>
+          <p>框选旧字 → 一键改文案 → 在图上直接输入 → 导出</p>
         </div>
       </div>
       <div class="header-actions">
@@ -32,40 +32,21 @@
             <button class="mode-btn active" data-mode="select" type="button">框选区域</button>
             <button class="mode-btn" data-mode="sample" type="button">吸取颜色</button>
             <button class="mode-btn" data-mode="brush" type="button">涂抹背景</button>
-            <button class="mode-btn" data-mode="text" type="button">添加文字</button>
+            <button class="mode-btn" data-mode="text" type="button">改文案</button>
           </div>
+          <p class="hint">三步：①框选旧字 ②点「一键改文案」或按 Enter ③在图上输入新字并拖动对齐。</p>
         </section>
 
         <section class="panel-block">
-          <h2>背景颜色</h2>
-          <div class="color-row">
-            <label class="color-field">
-              <span>目标色</span>
-              <input id="targetColor" type="color" value="#ffffff" />
-            </label>
-            <label class="color-field">
-              <span>容差</span>
-              <input id="tolerance" type="range" min="0" max="120" value="45" />
-              <em id="toleranceValue">45</em>
-            </label>
-          </div>
-          <div class="action-row">
-            <button id="recolorBtn" class="btn btn-primary full" type="button" disabled>替换选区背景色</button>
-            <button id="fillBrushBtn" class="btn btn-ghost full" type="button" disabled>用目标色涂抹选区</button>
-          </div>
-          <p class="hint">框选文字区域后点「替换选区背景色」：相近底色会被替换，文字笔触尽量保留。</p>
-        </section>
-
-        <section class="panel-block">
-          <h2>文字叠加</h2>
+          <h2>一键改文案</h2>
           <label class="field">
-            <span>文字内容</span>
-            <input id="textContent" type="text" placeholder="输入要覆盖的新文字" />
+            <span>新文字</span>
+            <input id="textContent" type="text" placeholder="输入要显示的新文案" />
           </label>
           <div class="field-grid">
             <label class="field">
               <span>字号</span>
-              <input id="fontSize" type="number" min="8" max="200" value="36" />
+              <input id="fontSize" type="number" min="8" max="300" value="36" />
             </label>
             <label class="field">
               <span>颜色</span>
@@ -86,9 +67,35 @@
             <input id="textBold" type="checkbox" checked />
             <span>加粗</span>
           </label>
+          <label class="field checkbox">
+            <input id="autoFillBg" type="checkbox" checked />
+            <span>放置前先用目标色覆盖选区旧字</span>
+          </label>
           <div class="action-row">
-            <button id="placeTextBtn" class="btn btn-primary full" type="button" disabled>在选区放置文字</button>
+            <button id="replaceTextBtn" class="btn btn-primary full" type="button" disabled>一键改文案</button>
+            <button id="placeTextBtn" class="btn btn-ghost full" type="button" disabled>仅放置文字（不清底）</button>
+            <button id="editSelectedTextBtn" class="btn btn-ghost full" type="button" disabled>编辑选中文字</button>
             <button id="clearTextBtn" class="btn btn-ghost full" type="button" disabled>清除文字图层</button>
+          </div>
+          <p class="hint">也可在「改文案」模式下双击图片空白处新增，或双击已有文字直接改。</p>
+        </section>
+
+        <section class="panel-block">
+          <h2>背景颜色</h2>
+          <div class="color-row">
+            <label class="color-field">
+              <span>目标色</span>
+              <input id="targetColor" type="color" value="#ffffff" />
+            </label>
+            <label class="color-field">
+              <span>容差</span>
+              <input id="tolerance" type="range" min="0" max="120" value="45" />
+              <em id="toleranceValue">45</em>
+            </label>
+          </div>
+          <div class="action-row">
+            <button id="recolorBtn" class="btn btn-primary full" type="button" disabled>替换选区背景色</button>
+            <button id="fillBrushBtn" class="btn btn-ghost full" type="button" disabled>用目标色涂抹选区</button>
           </div>
         </section>
 
@@ -105,16 +112,17 @@
       <section class="stage">
         <div id="emptyState" class="empty-state">
           <div class="empty-card">
-            <h2>上传一张贴片图开始</h2>
-            <p>支持 JPG / PNG / WebP。建议先框选文字区域，再替换背景色或叠加新文字。</p>
+            <h2>打开一张贴片图开始</h2>
+            <p>支持 JPG / PNG / WebP。框选旧文字区域后，可一键清底并在图上直接改文案。</p>
             <button id="emptyOpenBtn" class="btn btn-primary" type="button">选择图片</button>
           </div>
         </div>
         <div id="canvasWrap" class="canvas-wrap hidden">
           <canvas id="mainCanvas"></canvas>
           <canvas id="overlayCanvas"></canvas>
+          <textarea id="inlineTextEditor" class="inline-text-editor hidden" spellcheck="false"></textarea>
         </div>
-        <div id="statusBar" class="status-bar">等待上传图片</div>
+        <div id="statusBar" class="status-bar">等待打开贴片图</div>
       </section>
     </main>
   </div>

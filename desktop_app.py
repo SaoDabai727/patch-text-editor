@@ -39,11 +39,22 @@ class DesktopApi:
             return None
         import webview
 
-        result = WINDOW.create_file_dialog(
-            webview.OPEN_DIALOG,
-            allow_multiple=False,
-            file_types=("图片文件 (*.png;*.jpg;*.jpeg;*.webp;*.bmp;*.gif)",),
-        )
+        dialog = getattr(getattr(webview, "FileDialog", None), "OPEN", None)
+        if dialog is None:
+            dialog = getattr(webview, "OPEN_DIALOG", 10)
+
+        try:
+            result = WINDOW.create_file_dialog(
+                dialog,
+                allow_multiple=False,
+                file_types=(
+                    "Image Files (*.png;*.jpg;*.jpeg;*.webp;*.bmp;*.gif)",
+                    "All files (*.*)",
+                ),
+            )
+        except Exception:
+            result = WINDOW.create_file_dialog(dialog, allow_multiple=False)
+
         if not result:
             return None
 
@@ -67,13 +78,25 @@ class DesktopApi:
 
         import webview
 
+        dialog = getattr(getattr(webview, "FileDialog", None), "SAVE", None)
+        if dialog is None:
+            dialog = getattr(webview, "SAVE_DIALOG", 20)
+
         default_name = suggested_name or f"贴片修改-{_now_stamp()}.png"
-        result = WINDOW.create_file_dialog(
-            webview.SAVE_DIALOG,
-            directory=str(Path.home() / "Desktop"),
-            save_filename=default_name,
-            file_types=("PNG 图片 (*.png)",),
-        )
+        try:
+            result = WINDOW.create_file_dialog(
+                dialog,
+                directory=str(Path.home() / "Desktop"),
+                save_filename=default_name,
+                file_types=("PNG Image (*.png)",),
+            )
+        except Exception:
+            result = WINDOW.create_file_dialog(
+                dialog,
+                directory=str(Path.home() / "Desktop"),
+                save_filename=default_name,
+            )
+
         if not result:
             return {"ok": False, "canceled": True}
 
