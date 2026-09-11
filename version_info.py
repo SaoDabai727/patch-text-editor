@@ -3,7 +3,7 @@
 
 APP_NAME = "贴片文字修改工具"
 APP_ID = "PatchTextEditor"
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 PUBLISHER = "SaoDabai727"
 
 # GitHub Releases 云端（与蔬菜汇总等同款设计）

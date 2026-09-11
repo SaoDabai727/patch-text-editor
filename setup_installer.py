@@ -276,30 +276,40 @@ def run_gui(silent: bool = False, update_mode: bool = False, install_dir: Path |
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("/SILENT", "/silent", dest="silent", action="store_true")
-    parser.add_argument("/UPDATE", "/update", dest="update", action="store_true")
-    parser.add_argument("/DIR", "/dir", dest="dir", default="")
-    # 兼容 -- 形式
-    parser.add_argument("--silent", action="store_true")
-    parser.add_argument("--update", action="store_true")
-    parser.add_argument("--dir", default="")
-    parser.add_argument("--uninstall", action="store_true")
-    args, _ = parser.parse_known_args(argv)
+    """手动解析参数，兼容 Windows /SILENT 与 --silent，避免 argparse 不支持 / 前缀。"""
+    silent = False
+    update = False
+    uninstall = False
+    install_dir = ""
 
-    # 处理 /DIR=path
-    for item in argv:
-        if item.upper().startswith("/DIR="):
-            args.dir = item.split("=", 1)[1]
-        if item.lower().startswith("--dir="):
-            args.dir = item.split("=", 1)[1]
-    if args.silent or args.silent is True:
-        pass
-    if getattr(args, "silent", False) is False and any(a.upper() == "/SILENT" for a in argv):
-        args.silent = True
-    if any(a.upper() == "/UPDATE" for a in argv):
-        args.update = True
-    return args
+    i = 0
+    while i < len(argv):
+        raw = argv[i]
+        key = raw.upper()
+        lower = raw.lower()
+
+        if key in ("/SILENT", "/S") or lower in ("--silent", "-s"):
+            silent = True
+        elif key in ("/UPDATE",) or lower in ("--update",):
+            update = True
+        elif lower in ("--uninstall", "/uninstall"):
+            uninstall = True
+        elif key.startswith("/DIR="):
+            install_dir = raw.split("=", 1)[1].strip().strip('"')
+        elif lower.startswith("--dir="):
+            install_dir = raw.split("=", 1)[1].strip().strip('"')
+        elif key in ("/DIR",) or lower in ("--dir",):
+            if i + 1 < len(argv):
+                i += 1
+                install_dir = argv[i].strip().strip('"')
+        i += 1
+
+    return argparse.Namespace(
+        silent=silent,
+        update=update,
+        uninstall=uninstall,
+        dir=install_dir,
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
