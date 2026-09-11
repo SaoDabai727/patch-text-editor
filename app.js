@@ -249,25 +249,16 @@
     loadImageFromUrl(url, file.name, true);
   }
 
-  async function openImageNative() {
-    const py = getPyApi();
-    if (py && py.open_image) {
-      try {
-        const result = await py.open_image();
-        if (!result) return;
-        loadImageFromUrl(result.dataUrl, result.name);
-        return;
-      } catch (err) {
-        setStatus("打开失败，改用系统文件选择");
-      }
+  function openImageNative() {
+    setStatus("请选择贴片图片…");
+    // 必须优先用 HTML file input。
+    // pywebview 在 js_api 线程里调 create_file_dialog 会卡住，表现为“点击没反应”。
+    try {
+      fileInput.value = "";
+      fileInput.click();
+    } catch (err) {
+      setStatus("无法打开文件选择框：" + (err && err.message ? err.message : err));
     }
-    if (electronAPI) {
-      const result = await electronAPI.openImageDialog();
-      if (!result) return;
-      loadImageFromUrl(result.dataUrl, result.name);
-      return;
-    }
-    fileInput.click();
   }
 
   function estimateBgColor(imageData) {
@@ -608,37 +599,26 @@
   }
 
   async function exportImage() {
-    if (!state.imageLoaded) return;
+    if (!state.imageLoaded) {
+      setStatus("请先打开图片");
+      return;
+    }
+    setStatus("正在导出…");
     const exportCanvas = buildExportCanvas();
-    const dataUrl = exportCanvas.toDataURL("image/png");
-    const py = getPyApi();
-    if (py && py.save_image) {
-      const result = await py.save_image(dataUrl, `贴片修改-${Date.now()}.png`);
-      if (result && result.ok) setStatus(`已保存：${result.path}`);
-      else if (!result || !result.canceled) setStatus("导出失败");
-      return;
-    }
-    if (electronAPI) {
-      const result = await electronAPI.saveImageDialog(dataUrl);
-      if (result && result.ok) {
-        setStatus(`已保存：${result.path}`);
-        if (electronAPI.showItemInFolder) electronAPI.showItemInFolder(result.path);
-      } else if (!result || !result.canceled) {
-        setStatus("导出失败");
-      }
-      return;
-    }
     exportCanvas.toBlob((blob) => {
       if (!blob) {
         setStatus("导出失败");
         return;
       }
       const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `patch-edit-${Date.now()}.png`;
+      const url = URL.createObjectURL(blob);
+      a.href = url;
+      a.download = `贴片修改-${Date.now()}.png`;
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(a.href);
-      setStatus("已导出 PNG");
+      a.remove();
+      URL.revokeObjectURL(url);
+      setStatus("已导出 PNG（下载目录）");
     }, "image/png");
   }
 
@@ -724,34 +704,48 @@
   }
 
   // Events
+  function on(el, evt, fn) {
+    if (!el) return;
+    el.addEventListener(evt, fn);
+  }
+
   modeButtons.forEach((btn) => {
-    btn.addEventListener("click", () => setMode(btn.dataset.mode));
+    on(btn, "click", () => setMode(btn.dataset.mode));
   });
 
-  fileInput.addEventListener("change", (e) => {
+  on(fileInput, "change", (e) => {
     const file = e.target.files && e.target.files[0];
     if (file) loadImageFile(file);
     fileInput.value = "";
   });
 
-  openBtn.addEventListener("click", openImageNative);
-  emptyOpenBtn.addEventListener("click", openImageNative);
-  checkUpdateBtn.addEventListener("click", () => runUpdateCheck(true));
-  updateLaterBtn.addEventListener("click", hideUpdateModal);
-  updateNowBtn.addEventListener("click", applyPendingUpdate);
+  on(openBtn, "click", (e) => {
+    e.preventDefault();
+    openImageNative();
+  });
+  on(emptyOpenBtn, "click", (e) => {
+    e.preventDefault();
+    openImageNative();
+  });
+  on(checkUpdateBtn, "click", () => runUpdateCheck(true));
+  on(updateLaterBtn, "click", hideUpdateModal);
+  on(updateNowBtn, "click", applyPendingUpdate);
+  on(updateModal, "click", (e) => {
+    if (e.target === updateModal) hideUpdateModal();
+  });
 
   tolerance.addEventListener("input", () => {
     toleranceValue.textContent = tolerance.value;
   });
 
-  recolorBtn.addEventListener("click", recolorSelection);
-  fillBrushBtn.addEventListener("click", fillSelectionSolid);
-  replaceTextBtn.addEventListener("click", replaceTextOneClick);
-  placeTextBtn.addEventListener("click", () => placeTextInSelection(false));
-  editSelectedTextBtn.addEventListener("click", () => {
+  on(recolorBtn, "click", recolorSelection);
+  on(fillBrushBtn, "click", fillSelectionSolid);
+  on(replaceTextBtn, "click", replaceTextOneClick);
+  on(placeTextBtn, "click", () => placeTextInSelection(false));
+  on(editSelectedTextBtn, "click", () => {
     if (state.selectedTextIndex >= 0) openInlineEditor(state.selectedTextIndex);
   });
-  clearTextBtn.addEventListener("click", () => {
+  on(clearTextBtn, "click", () => {
     commitInlineEditor();
     state.textLayers = [];
     state.selectedTextIndex = -1;
@@ -759,7 +753,7 @@
     updateTextButtons();
     setStatus("已清除文字图层");
   });
-  downloadBtn.addEventListener("click", exportImage);
+  on(downloadBtn, "click", exportImage);
 
   ["input", "change"].forEach((evt) => {
     textContent.addEventListener(evt, syncSelectedLayerFromPanel);
@@ -984,8 +978,9 @@
         if (info && info.version) ver = " v" + info.version;
       }
     } catch (_) {}
-    setStatus("桌面版已就绪" + ver + "，打开贴片图后即可改文案");
-    runUpdateCheck(false);
+    setStatus("桌面版已就绪" + ver + "，点击「打开贴片图」开始");
+    // 延后检查更新，避免启动时卡住点击
+    setTimeout(() => runUpdateCheck(false), 2500);
   });
 
   window.addEventListener("resize", () => {
